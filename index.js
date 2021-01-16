@@ -23,32 +23,37 @@ app.get('/search/movies/:movie', (req, res)=>{
     //console.log(MOVIE);
     Response.find({texto: MOVIE})
     .then((responseFinded) =>{
-        if(responseFinded){
-            console.log("Respuesta: ", responseFinded);
-            responseFinded.forEach((resp)=>{
-                        res.status(200).send(resp)
-                        let search = new Search({
-                            fecha: new Date(),
-                            texto: MOVIE,
-                            responseFrom: "CACHÉ"
-                        })
-                        // Guardo el texto de búsqueda
-                        search.save().then((searchSaved)=>{
-                            console.log("Search save: ", searchSaved);
-                        })
-                    })
+        if(responseFinded[0] !== undefined){
+
+            //console.log("Respuesta: ", responseFinded[0].result);} 
+            const RESULTCACHE = responseFinded[0].result; 
+
+            let search = new Search({
+                fecha: new Date(),
+                texto: MOVIE,
+                responseFrom: "CACHÉ"
+            })
+            // Guardo el texto de búsqueda
+            search.save().then((searchSaved)=>{
+                console.log("Search save: ", searchSaved);
+            })
+            res.status(200).send(RESULTCACHE);
         }
-        fetch(`https://api.themoviedb.org/3/search/movie?api_key=051f0c798246428b4e7f3c65da9360a2&language=en-US&query=${encodeURI(MOVIE)}&page=1&include_adult=false`)
+        else if(responseFinded[0] === undefined){
+
+            fetch(`https://api.themoviedb.org/3/search/movie?api_key=051f0c798246428b4e7f3c65da9360a2&language=en-US&query=${encodeURI(MOVIE)}&page=1&include_adult=false`)
             .then((res) => { return res.json();  })
             .then((json) => {
                 const RESULTS = json.results;
-
+                //console.log("Respuesta de la API", RESULTS);})
+                        
                 // Búsqueda
                 let search = new Search({
                     fecha: new Date(),
                     texto: MOVIE,
                     responseFrom: "API"
                 })
+
                 // Guardo el texto de búsqueda
                 search.save().then((searchSaved)=>{
                     console.log("Search save: ", searchSaved);
@@ -63,10 +68,12 @@ app.get('/search/movies/:movie', (req, res)=>{
                     console.log("Response save: ", responseSaved);
                 })
 
-                if(json) return res.status(200).send(RESULTS);})
+                if(json) return res.status(200).send(RESULTS);});
+        }
     }).catch((err) => {
         res.status(500).send({ error: err });
-    })
+    })    
+        
         
 })
 
